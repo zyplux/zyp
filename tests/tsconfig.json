@@ -1,12 +1,33 @@
 {
-  "extends": "@totvibe/tsconfig/bun.json",
+  "extends": "@totvibe/tsconfig/tsconfig.bun.json",
   "include": ["fixtures", "shared-stories", "core", "protocol", "runtime", "safety", "sandbox", "tools"],
   "references": [
-    { "path": "../packages/core" },
-    { "path": "../packages/protocol" },
-    { "path": "../packages/runtime" },
-    { "path": "../packages/safety" },
-    { "path": "../packages/sandbox" },
-    { "path": "../packages/tools" }
+    {
+      "path": "../packages/core"
+    },
+    {
+      "path": "../packages/protocol"
+    },
+    {
+      "path": "../packages/runtime"
+    },
+    {
+      "path": "../packages/safety"
+    },
+    {
+      "path": "../packages/sandbox"
+    },
+    {
+      "path": "../packages/tools"
+    },
+    {
+      "path": "../apps/tui"
+    },
+    {
+      "path": "../packages/view"
+    },
+    {
+      "path": "../apps/web"
+    }
   ]
 }

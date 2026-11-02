@@ -1,29 +1,23 @@
 import { testRender } from '@opentui/react/test-utils';
-import { Root } from '@totvibe/tui';
+import { Root } from '@totvibe/tui/root';
 import { act } from 'react';
 import { expect } from 'vitest';
 
-import type { Scene } from '#shared-stories/harness';
-
-import { buildConfig, CONNECTED_PROVIDER_KEYS, isolateProviderEnv, stubFetchOk } from '#fixtures/config';
-import { resetModelReply, setModelReply } from '#model-mock';
-
-type RenderOptions = {
-  connectedProviderKeys?: Record<string, string>;
-};
-
-type RenderSetup = Awaited<ReturnType<typeof testRender>>;
+import { buildConfig } from '#fixtures/config';
+import { createHarness, isolateScene, type RenderOptions, type Scene } from '#shared-stories/harness';
 
 const EVENTUALLY_MAX_PASSES = 50;
 const EVENTUALLY_PASS_DELAY_MS = 2;
 
-type TuiScene = Scene & {
-  pressArrowDown(): Promise<void>;
-};
-
 const renderScene = async ({ connectedProviderKeys }: RenderOptions) => {
-  const restoreEnv = isolateProviderEnv(connectedProviderKeys ?? {});
-  const restoreFetch = stubFetchOk();
+  type RenderSetup = Awaited<ReturnType<typeof testRender>>;
+  type TuiScene = Scene & {
+    pressArrow(direction: 'down' | 'up'): Promise<void>;
+    pressEnter(): Promise<void>;
+    pressEscape(): Promise<void>;
+    pressKey(key: string): Promise<void>;
+  };
+  const restoreScene = isolateScene(connectedProviderKeys);
   let setup!: RenderSetup;
   await act(async () => {
     setup = await testRender(<Root config={buildConfig()} />, {
@@ -75,27 +69,25 @@ const renderScene = async ({ connectedProviderKeys }: RenderOptions) => {
         await setup.flush();
         setup.renderer.destroy();
       });
-      restoreFetch();
-      restoreEnv();
+      restoreScene();
     },
-    pressArrowDown: () =>
+    pressArrow: direction =>
       settle(() => {
-        setup.mockInput.pressArrow('down');
+        setup.mockInput.pressArrow(direction);
+      }),
+    pressEnter: () =>
+      settle(() => {
+        setup.mockInput.pressEnter();
+      }),
+    pressEscape: () =>
+      settle(() => {
+        setup.mockInput.pressEscape();
+      }),
+    pressKey: key =>
+      settle(() => {
+        setup.mockInput.pressKey(key);
       }),
   } satisfies TuiScene;
 };
 
-export const tuiHarness = {
-  connected: () => {
-    resetModelReply();
-    return renderScene({ connectedProviderKeys: CONNECTED_PROVIDER_KEYS });
-  },
-  connectedWithReply: (reply: string) => {
-    setModelReply(reply);
-    return renderScene({ connectedProviderKeys: CONNECTED_PROVIDER_KEYS });
-  },
-  unconnected: () => {
-    resetModelReply();
-    return renderScene({});
-  },
-};
+export const tuiHarness = createHarness(renderScene);

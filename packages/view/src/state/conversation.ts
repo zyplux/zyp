@@ -22,5 +22,3 @@ export const appendMessageAtom = atom(undefined, (get, set, message: MessageDraf
   set(messageIdCounterAtom, id);
   set(messagesAtom, [...get(messagesAtom), { id: `m${String(id)}`, ...message }]);
 });
-
-export { type Role } from '@totvibe/protocol';

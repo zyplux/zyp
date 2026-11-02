@@ -1,54 +1,27 @@
 import { decodePasteBytes, type InputRenderable } from '@opentui/core';
 import { useKeyboard, usePaste } from '@opentui/react';
-import { DEFAULT_PROVIDER, type ProviderInfo, PROVIDERS } from '@totvibe/protocol';
-import {
-  connectedProvidersAtom,
-  connectionStatusAtom,
-  modelIdAtom,
-  noticeAtom,
-  providerDialogOpenAtom,
-  providerNameAtom,
-  theme,
-  useController,
-} from '@totvibe/view';
-import { useAtomValue, useSetAtom } from 'jotai';
+import { PROVIDERS } from '@totvibe/protocol';
+import { theme, useProviderDialog } from '@totvibe/view';
 import { useRef, useState } from 'react';
 
-type DialogMode = 'key' | 'model' | 'select';
-
 export const ProviderDialog = () => {
-  const controller = useController();
-  const activeProviderName = useAtomValue(providerNameAtom);
-  const activeModelId = useAtomValue(modelIdAtom);
-  const connectionStatus = useAtomValue(connectionStatusAtom);
-  const connectedProviders = useAtomValue(connectedProvidersAtom);
-  const notice = useAtomValue(noticeAtom);
-  const setNotice = useSetAtom(noticeAtom);
-  const setProviderDialogOpen = useSetAtom(providerDialogOpenAtom);
-  const canClose = connectionStatus !== 'no-key';
-
-  const initialIndex = Math.max(
-    0,
-    PROVIDERS.findIndex(provider => provider.name === activeProviderName),
-  );
-  const [highlightedIndex, setHighlightedIndex] = useState(initialIndex);
+  type DialogMode = 'key' | 'model' | 'select';
+  const {
+    activateProvider,
+    canClose,
+    controller,
+    highlightedIndex,
+    highlightedProvider,
+    isConnected,
+    notice,
+    resolveModelId,
+    setHighlightedIndex,
+    setNotice,
+    setProviderDialogOpen,
+  } = useProviderDialog();
   const [mode, setMode] = useState<DialogMode>('select');
   const keyInputRef = useRef<InputRenderable>(null);
   const modelInputRef = useRef<InputRenderable>(null);
-
-  const highlightedProvider = PROVIDERS[highlightedIndex] ?? DEFAULT_PROVIDER;
-  const isConnected = ({ name }: ProviderInfo) => connectedProviders.has(name);
-  const resolveModelId = ({ defaultModel, name }: ProviderInfo) =>
-    name === activeProviderName ? activeModelId : defaultModel;
-
-  const activateProvider = (provider: ProviderInfo, modelId: string) => {
-    if (!isConnected(provider)) {
-      setNotice(`Add a ${provider.apiKeyEnv} to use ${provider.label}.`);
-      setMode('key');
-      return;
-    }
-    controller.selectProvider(provider.name, modelId.trim() || provider.defaultModel);
-  };
 
   const submitApiKey = () => {
     const apiKey = keyInputRef.current?.value.trim() ?? '';
@@ -68,46 +41,41 @@ export const ProviderDialog = () => {
     if (mode !== 'key') setMode('key');
   });
 
+  const selectActions: Partial<Record<string, () => void>> = {
+    down: () => {
+      setHighlightedIndex(current => (current === PROVIDERS.length - 1 ? 0 : current + 1));
+    },
+    escape: () => {
+      if (canClose) setProviderDialogOpen(false);
+    },
+    k: () => {
+      setMode('key');
+    },
+    m: () => {
+      setMode('model');
+    },
+    o: () => {
+      controller.openKeyPage(highlightedProvider.keyUrl);
+      setNotice(`Opening ${highlightedProvider.keyUrl}`);
+    },
+    return: () => {
+      if (!isConnected(highlightedProvider)) setMode('key');
+      activateProvider(resolveModelId(highlightedProvider));
+    },
+    t: () => {
+      controller.testConnection(highlightedProvider.name);
+    },
+    up: () => {
+      setHighlightedIndex(current => (current === 0 ? PROVIDERS.length : current) - 1);
+    },
+  };
+
   useKeyboard(key => {
     if (mode !== 'select') {
       if (key.name === 'escape') setMode('select');
       return;
     }
-    switch (key.name) {
-      case 'down': {
-        setHighlightedIndex(current => (current === PROVIDERS.length - 1 ? 0 : current + 1));
-        break;
-      }
-      case 'escape': {
-        if (canClose) setProviderDialogOpen(false);
-        break;
-      }
-      case 'k': {
-        setMode('key');
-        break;
-      }
-      case 'm': {
-        setMode('model');
-        break;
-      }
-      case 'o': {
-        controller.openKeyPage(highlightedProvider.keyUrl);
-        setNotice(`Opening ${highlightedProvider.keyUrl}`);
-        break;
-      }
-      case 'return': {
-        activateProvider(highlightedProvider, resolveModelId(highlightedProvider));
-        break;
-      }
-      case 't': {
-        controller.testConnection(highlightedProvider.name);
-        break;
-      }
-      case 'up': {
-        setHighlightedIndex(current => (current === 0 ? PROVIDERS.length : current) - 1);
-        break;
-      }
-    }
+    selectActions[key.name]?.();
   });
 
   return (
@@ -162,7 +130,8 @@ export const ProviderDialog = () => {
             focused={mode === 'model'}
             key={`model-${highlightedProvider.name}`}
             onSubmit={() => {
-              activateProvider(highlightedProvider, modelInputRef.current?.value ?? highlightedProvider.defaultModel);
+              if (!isConnected(highlightedProvider)) setMode('key');
+              activateProvider(modelInputRef.current?.value ?? highlightedProvider.defaultModel);
             }}
             placeholder="model id, Enter to use"
             ref={modelInputRef}

@@ -1,5 +1,5 @@
 {
-  "extends": "@totvibe/tsconfig/tui.json",
+  "extends": "@totvibe/tsconfig/tsconfig.tui.json",
   "include": ["."],
   "references": [{ "path": "../../apps/tui" }, { "path": ".." }]
 }

@@ -1,16 +1,18 @@
-import type { AnyToolDef, ToolContext } from '@totvibe/core';
+import type { AnyToolDef, ToolContext } from '@totvibe/core/index';
 
-import { SandboxState } from '@totvibe/sandbox';
+import { SandboxState } from '@totvibe/sandbox/index';
 import { createBuiltinTools, type ToolOptions } from '@totvibe/tools';
+import { mkdir, symlink, writeFile } from 'node:fs/promises';
 import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { test as base } from 'vitest';
 
-export { writeStubHelper } from '#sandbox';
+import { writeStubHelper } from '#fixtures/sandbox-helper';
 
-export const OUTPUT_CHAR_CAP = 100_000;
+const OUTPUT_CHAR_CAP = 100_000;
 
-export const makeToolbox = async (options: ToolOptions = {}) => {
+const makeToolbox = async (options: ToolOptions = {}) => {
   const cwd = await mkdtemp(path.join(tmpdir(), 'totvibe-tools-'));
   const sandbox = new SandboxState(cwd);
   const tools: AnyToolDef[] = createBuiltinTools(sandbox, options);
@@ -22,3 +24,10 @@ export const makeToolbox = async (options: ToolOptions = {}) => {
   };
   return { cwd, run, sandbox, tools };
 };
+
+const tools = { makeToolbox, mkdir, OUTPUT_CHAR_CAP, path, symlink, writeFile, writeStubHelper };
+export const test = base.extend<{ tools: typeof tools }>({
+  tools: async ({}, provide) => {
+    await provide(tools);
+  },
+});

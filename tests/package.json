@@ -16,7 +16,8 @@
     "#tools": "./tools/fixtures.ts",
     "#tui": "./tui/fixtures.ts",
     "#view": "./view/fixtures.ts",
-    "#web": "./web/fixtures.ts"
+    "#web": "./web/fixtures.ts",
+    "#fixtures/sandbox-helper": "./fixtures/sandbox-helper.ts"
   },
   "dependencies": {
     "@opentui/react": "catalog:",

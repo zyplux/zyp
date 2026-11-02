@@ -2,12 +2,6 @@ import type { ProviderInfo } from '@totvibe/protocol';
 
 import { createOpenAICompatible, type OpenAICompatibleProvider } from '@ai-sdk/openai-compatible';
 
-export type ApiKeyCheck = {
-  ok: boolean;
-  reason?: string;
-  rejected: boolean;
-};
-
 export const buildModel = (
   { apiKeyEnv, baseURL, name }: ProviderInfo,
   modelId: string,

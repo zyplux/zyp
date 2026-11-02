@@ -3,12 +3,11 @@ import { type AgentController, applyServerEvent, type Store } from '@totvibe/vie
 
 import { openKeyPage } from '@/actions';
 
-type LocalController = {
-  controller: AgentController;
-  start: () => void;
-};
-
 export const createLocalController = (config: InitialConfig, store: Store) => {
+  type LocalController = {
+    controller: AgentController;
+    start: () => void;
+  };
   const runtime = createRuntime(config);
   runtime.subscribe(event => {
     applyServerEvent(store, event);

@@ -1,15 +1,12 @@
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
-import { z } from 'zod';
+import * as z from 'zod';
 
-import type { AgentEvent } from './events';
+import type { ModelMessage } from './ai-core';
+import type { AgentEvent } from './interfaces';
 
-import { type ModelMessage, modelMessageSchema } from './ai-core';
+import { modelMessageSchema } from './contracts';
 import { JsonlLog } from './jsonl';
-
-type MessageRecord = {
-  message: ModelMessage;
-};
 
 const MessageRecordSchema = z.object({ message: modelMessageSchema });
 
@@ -28,6 +25,9 @@ export class SessionStore {
   }
 
   persist(event: AgentEvent) {
+    type MessageRecord = {
+      message: ModelMessage;
+    };
     if (event.type !== 'message') return;
     const { message } = event;
     this.log.append({ message } satisfies MessageRecord);

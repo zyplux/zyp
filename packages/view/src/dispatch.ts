@@ -1,4 +1,4 @@
-import type { AgentEvent } from '@totvibe/core';
+import type { AgentEvent } from '@totvibe/core/interfaces';
 import type { ServerEvent } from '@totvibe/protocol';
 
 import type { Store } from './state/store';

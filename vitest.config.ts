@@ -49,6 +49,7 @@ export default defineConfig({
       },
     ],
     restoreMocks: true,
+    setupFiles: ['tests/fixtures/setup-model.ts'],
     unstubEnvs: true,
     unstubGlobals: true,
   },

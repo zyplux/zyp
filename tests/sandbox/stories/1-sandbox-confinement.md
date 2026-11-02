@@ -8,13 +8,13 @@ gracefully when it is missing or disabled.
 
 ### 1.1.1 allows writes inside the working directory and default writable paths
 
-### 1.1.2 grants additional read-write and read-only directories on request
+### 1.1.2 grants additional read-write directories on request
 
 ### 1.1.3 serializes the grants into helper environment variables
 
 ## 1.2 locating and probing the sandbox helper
 
-### 1.2.1 resolves the helper binary from the environment override
+### 1.2.1 uses the configured helper binary
 
 ### 1.2.2 reports the sandbox disabled when the user opted out
 

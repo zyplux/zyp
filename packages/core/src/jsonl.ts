@@ -1,9 +1,7 @@
+import type * as z from 'zod';
+
 import { appendFile, mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
-
-export type RecordSchema<T> = {
-  parse(value: unknown): T;
-};
 
 export class JsonlLog {
   private isDirReady = false;
@@ -28,7 +26,7 @@ export class JsonlLog {
     return this.writes;
   }
 
-  async readAll<T>(schema: RecordSchema<T>) {
+  async readAll<T>(schema: z.ZodType<T>) {
     let text: string;
     try {
       text = await readFile(this.path, 'utf8');

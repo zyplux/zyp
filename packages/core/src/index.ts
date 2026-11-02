@@ -1,5 +1,5 @@
 export * from './bus';
-export * from './events';
+export * from './interfaces';
 export * from './jsonl';
 export * from './loop';
 export * from './pipeline';

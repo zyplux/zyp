@@ -1,5 +1,5 @@
 import type { ConnectionStatus } from '@totvibe/protocol';
-import type { SandboxStatus } from '@totvibe/sandbox';
+import type { SandboxStatus } from '@totvibe/sandbox/interfaces';
 
 import { theme } from './theme';
 

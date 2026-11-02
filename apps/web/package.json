@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/root.tsx",
+    "./root": "./src/root.tsx",
     "./server": "./src/server.ts"
   },
   "dependencies": {
@@ -17,5 +17,6 @@
   },
   "devDependencies": {
     "@types/react-dom": "catalog:"
-  }
+  },
+  "browser": "./src/frontend.tsx"
 }

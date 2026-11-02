@@ -1,5 +1,5 @@
 import { ClientCommandSchema } from '@totvibe/protocol';
-import { type AgentRuntime, createRuntime, loadInitialConfig } from '@totvibe/runtime';
+import { type AgentRuntime, createRuntime, dispatchClientCommand, loadInitialConfig } from '@totvibe/runtime';
 
 import index from './index.html';
 
@@ -10,12 +10,11 @@ export type ServeOptions = {
   sandbox: boolean;
 };
 
-type SocketData = {
-  runtime?: AgentRuntime;
-  unsubscribe?: () => void;
-};
-
 export const startServer = ({ port, sandbox }: ServeOptions) => {
+  type SocketData = {
+    runtime?: AgentRuntime;
+    unsubscribe?: () => void;
+  };
   const isDev = process.env.NODE_ENV !== 'production';
   const server = Bun.serve<SocketData>({
     development: isDev ? { console: true, hmr: true } : false,
@@ -42,32 +41,7 @@ export const startServer = ({ port, sandbox }: ServeOptions) => {
         const command = ClientCommandSchema.parse(
           JSON.parse(typeof message === 'string' ? message : message.toString()),
         );
-        switch (command.type) {
-          case 'approve': {
-            runtime.resolveApproval(command.granted);
-            break;
-          }
-          case 'cancel': {
-            runtime.cancel();
-            break;
-          }
-          case 'save-api-key': {
-            void runtime.saveApiKey(command.providerName, command.apiKey);
-            break;
-          }
-          case 'select-provider': {
-            runtime.selectProvider(command.providerName, command.modelId);
-            break;
-          }
-          case 'submit': {
-            runtime.submit(command.text);
-            break;
-          }
-          case 'test-connection': {
-            void runtime.testConnection(command.providerName);
-            break;
-          }
-        }
+        void dispatchClientCommand(runtime, command);
       },
       open: async ws => {
         const config = await loadInitialConfig({ sandbox: sandbox });

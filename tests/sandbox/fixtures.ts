@@ -1,15 +1,16 @@
+import { probeSandbox, runSandboxedBash, SandboxState } from '@totvibe/sandbox/index';
 import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { test as base } from 'vitest';
 
-export { helperPath, probeSandbox, runSandboxedBash, SandboxState } from '@totvibe/sandbox';
+import { writeStubHelper } from '#fixtures/sandbox-helper';
 
-export const makeScratchDir = () => mkdtemp(path.join(tmpdir(), 'totvibe-sandbox-'));
+const makeScratchDir = () => mkdtemp(path.join(tmpdir(), 'totvibe-sandbox-'));
 
-export const writeStubHelper = async (dir: string, script: string) => {
-  const binaryPath = path.join(dir, 'totvibe-sandbox');
-  await Bun.write(binaryPath, `#!/bin/sh\n${script}\n`);
-  const chmod = Bun.spawn(['chmod', '+x', binaryPath]);
-  await chmod.exited;
-  return binaryPath;
-};
+const sandbox = { makeScratchDir, probeSandbox, runSandboxedBash, SandboxState, writeStubHelper };
+export const test = base.extend<{ sandbox: typeof sandbox }>({
+  sandbox: async ({}, provide) => {
+    await provide(sandbox);
+  },
+});

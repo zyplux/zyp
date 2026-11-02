@@ -10,13 +10,14 @@
 [38;2;187;154;247m   ░▒▓█▓▒░   ░▒▓██████▓▒░  ░▒▓█▓▒░      ░▒▓██▓▒░  ░▒▓█▓▒░▒▓███████▓▒░░▒▓████████▓▒░[0m
 ```
 
-A minimalist terminal coding assistant — an owned, streaming tool-use loop wrapped in an [OpenTUI](https://opentui.com) TUI, on [Bun](https://bun.com), powered by the [Vercel AI SDK](https://ai-sdk.dev) v6.
+A minimalist terminal coding assistant — an owned, streaming tool-use loop wrapped in an [OpenTUI](https://opentui.com) TUI, on [Bun](https://bun.com), powered by the [Vercel AI SDK](https://ai-sdk.dev) v7.
 
 ## Setup
 
 ```bash
-bun install
-bun run build:sandbox   # optional, Linux only — builds the bash sandbox helper (needs Rust)
+pnpm install
+uv sync --all-groups
+pnpm run build:sandbox   # optional, Linux only — builds the bash sandbox helper (needs Rust)
 ```
 
 No key needed up front — the connect dialog (below) walks you through it on first run and saves it to `.env`. To skip the dialog, set a key in `.env` (`cp .env.example .env`).
@@ -24,16 +25,16 @@ No key needed up front — the connect dialog (below) walks you through it on fi
 ## Run
 
 ```bash
-bun start          # or: just up
+pnpm start          # or: just up
 ```
 
 Type a request and press Enter. `read_file` and `list_dir` run automatically; `write_file` and `run_bash` ask for approval (`y` to run, `n` to skip). **Esc** cancels the running turn; **Ctrl+C** quits. The status bar shows the active `provider:model`, connection state, and sandbox status. Each turn is persisted append-only under `~/.totvibe/sessions`; resume with `--continue` (most recent) or `--resume <id>`.
 
-The sandbox is **on by default**, confining everything to the working directory. Pass `--no-sandbox` (e.g. `bun start --no-sandbox` or `just up --no-sandbox`) to run without it; `bun start --help` lists every flag.
+The sandbox is **on by default**, confining everything to the working directory. Pass `--no-sandbox` (e.g. `pnpm start --no-sandbox` or `just up --no-sandbox`) to run without it; `pnpm start --help` lists every flag.
 
 ### Sandboxing (Linux)
 
-The sandbox is **on by default** — file tools and `run_bash` are confined to the working directory unless you pass `--no-sandbox`. `run_bash` runs each command through a Landlock + namespace sandbox helper (`bun run build:sandbox` to build it). The command — and any process it spawns — can only:
+The sandbox is **on by default** — file tools and `run_bash` are confined to the working directory unless you pass `--no-sandbox`. `run_bash` runs each command through a Landlock + namespace sandbox helper (`pnpm run build:sandbox` to build it). The command — and any process it spawns — can only:
 
 - **read** system dirs (`/usr`, `/bin`, `/etc`, `/proc`, …);
 - **read/write** the working directory, `/tmp`, and `/dev`;
@@ -75,7 +76,7 @@ Read from the environment (Bun loads `.env` automatically):
 | `TOTVIBE_APPROVAL_TIMEOUT_MS` | `0`          | Approval-prompt timeout (`0` = wait indefinitely)                                                                |
 | `TOTVIBE_DATA_DIR`            | `~/.totvibe` | Where sessions + the approval/audit ledger are stored                                                            |
 
-Command-line flags (parsed with [citty](https://github.com/unjs/citty)) — run `bun start --help` for the full list:
+Command-line flags (parsed with [citty](https://github.com/unjs/citty)) — run `pnpm start --help` for the full list:
 
 | Flag            | Default    | Purpose                                                  |
 | --------------- | ---------- | -------------------------------------------------------- |
@@ -102,7 +103,7 @@ Easiest path is the connect dialog above (type **`/provider`**) — it opens the
 The model id in the table is the default for that provider; override it with `MODEL` to match the provider's current catalog. Example — DeepSeek:
 
 ```bash
-AI_PROVIDER=deepseek DEEPSEEK_API_KEY=sk-... MODEL=deepseek-v4-pro bun start
+AI_PROVIDER=deepseek DEEPSEEK_API_KEY=sk-... MODEL=deepseek-v4-pro pnpm start
 ```
 
 Or in `.env`:
@@ -113,11 +114,11 @@ DASHSCOPE_API_KEY=sk-...
 # MODEL=qwen3.7-max
 ```
 
-To add another OpenAI-compatible provider, append one entry (including its model metadata) to the `PROVIDERS` registry in `packages/tui/src/providers/registry.ts`.
+To add another OpenAI-compatible provider, append one entry (including its model metadata) to the `PROVIDERS` registry in `packages/protocol/src/providers.ts`.
 
 ## Architecture
 
-A Bun workspaces monorepo. Each package is one architectural concern, so each can evolve without touching the others.
+A pnpm workspaces monorepo. Each package is one architectural concern, so each can evolve without touching the others.
 
 _How a request flows through the packages, and where the extension seams (tools, policy middleware, persistence) plug in._
 

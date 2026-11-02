@@ -1,28 +1,25 @@
 import type { ServerEvent } from '@totvibe/protocol';
 import type { InitialConfig, RuntimeHost } from '@totvibe/runtime';
 
-import { createRuntime } from '@totvibe/runtime';
-import { mkdtemp } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import path from 'node:path';
-import { vi } from 'vitest';
-
-import { buildConfig } from '#fixtures/config';
-
-export { buildConfig, CONNECTED_PROVIDER_KEYS } from '#fixtures/config';
-export { scriptModelTurns, setModelReply, textTurn, toolCallTurn } from '#model-mock';
-
-export { DEFAULT_PROVIDER, findProvider, PROVIDERS, type ServerEvent } from '@totvibe/protocol';
-export {
+import { DEFAULT_PROVIDER, findProvider, PROVIDERS } from '@totvibe/protocol';
+import {
   buildModel,
   bunHost,
   createRuntime,
-  type InitialConfig,
+  dispatchClientCommand,
   isConnected,
   loadInitialConfig,
-  type RuntimeHost,
   validateApiKey,
 } from '@totvibe/runtime';
+import { mkdir, utimes, writeFile } from 'node:fs/promises';
+import { mkdtemp } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { test as base } from 'vitest';
+import { vi } from 'vitest';
+
+import { buildConfig, CONNECTED_PROVIDER_KEYS } from '#fixtures/config';
+import { scriptModelTurns, setModelReply, textTurn, toolCallTurn } from '#model-mock';
 
 const PROVIDER_KEY_ENV_VARS = [
   'DASHSCOPE_API_KEY',
@@ -36,17 +33,17 @@ const PROVIDER_KEY_ENV_VARS = [
   'MISTRAL_API_KEY',
 ];
 
-export const isolateEnv = (connectedKeys: Record<string, string> = {}) => {
+const isolateEnv = (connectedKeys: Record<string, string> = {}) => {
   for (const name of PROVIDER_KEY_ENV_VARS) vi.stubEnv(name, undefined);
   for (const [name, value] of Object.entries(connectedKeys)) vi.stubEnv(name, value);
 };
 
-export const HTTP_OK = 200;
-export const HTTP_UNAUTHORIZED = 401;
-export const HTTP_FORBIDDEN = 403;
-export const HTTP_INTERNAL_SERVER_ERROR = 500;
+const HTTP_OK = 200;
+const HTTP_UNAUTHORIZED = 401;
+const HTTP_FORBIDDEN = 403;
+const HTTP_INTERNAL_SERVER_ERROR = 500;
 
-export const stubFetch = (reply: Error | number) => {
+const stubFetch = (reply: Error | number) => {
   const stub: typeof globalThis.fetch = Object.assign(
     () =>
       reply instanceof Error ? Promise.reject(reply) : Promise.resolve(new Response(undefined, { status: reply })),
@@ -55,9 +52,9 @@ export const stubFetch = (reply: Error | number) => {
   vi.stubGlobal('fetch', stub);
 };
 
-export const makeScratchDir = () => mkdtemp(path.join(tmpdir(), 'totvibe-runtime-'));
+const makeScratchDir = () => mkdtemp(path.join(tmpdir(), 'totvibe-runtime-'));
 
-export const captureHost = () => {
+const captureHost = () => {
   const saved: Record<string, string>[] = [];
   const host: RuntimeHost = {
     saveEnvVars: updates => {
@@ -72,7 +69,7 @@ export const captureHost = () => {
 const EVENT_WAIT_MAX_PASSES = 500;
 const EVENT_WAIT_PASS_DELAY_MS = 2;
 
-export const makeRuntime = async (overrides: Partial<InitialConfig> = {}, host?: RuntimeHost) => {
+const makeRuntime = async (overrides: Partial<InitialConfig> = {}, host?: RuntimeHost) => {
   const dataDir = await makeScratchDir();
   const config: InitialConfig = {
     ...buildConfig(),
@@ -95,3 +92,73 @@ export const makeRuntime = async (overrides: Partial<InitialConfig> = {}, host?:
   };
   return { config, events, expectEvent, runtime };
 };
+
+const clearConfigEnv = () => {
+  isolateEnv();
+  for (const name of [
+    'AI_PROVIDER',
+    'MODEL',
+    'AUTO_APPROVE',
+    'TOTVIBE_DATA_DIR',
+    'TOTVIBE_SANDBOX_NET',
+    'TOTVIBE_APPROVAL_TIMEOUT_MS',
+    'TOTVIBE_MAX_STEPS',
+    'TOTVIBE_TOKEN_BUDGET',
+    'TOTVIBE_WALL_CLOCK_MS',
+  ]) {
+    vi.stubEnv(name, undefined);
+  }
+};
+const seedSession = async (sessionsDir: string, sessionId: string, text: string, modifiedAt: Date) => {
+  const sessionPath = path.join(sessionsDir, `${sessionId}.jsonl`);
+  await writeFile(sessionPath, `${JSON.stringify({ message: { content: text, role: 'user' } })}\n`);
+  await utimes(sessionPath, modifiedAt, modifiedAt);
+};
+const seedSessions = async (sessions: { id: string; modifiedAt: Date; text: string }[]) => {
+  clearConfigEnv();
+  const dataDir = await makeScratchDir();
+  vi.stubEnv('TOTVIBE_DATA_DIR', dataDir);
+  const sessionsDir = path.join(dataDir, 'sessions');
+  await mkdir(sessionsDir, { recursive: true });
+  for (const { id, modifiedAt, text } of sessions) await seedSession(sessionsDir, id, text, modifiedAt);
+};
+
+const runtime = {
+  buildConfig,
+  buildModel,
+  bunHost,
+  captureHost,
+  clearConfigEnv,
+  CONNECTED_PROVIDER_KEYS,
+  createRuntime,
+  DEFAULT_PROVIDER,
+  dispatchClientCommand,
+  findProvider,
+  HTTP_FORBIDDEN,
+  HTTP_INTERNAL_SERVER_ERROR,
+  HTTP_OK,
+  HTTP_UNAUTHORIZED,
+  isConnected,
+  isolateEnv,
+  loadInitialConfig,
+  makeRuntime,
+  makeScratchDir,
+  mkdir,
+  path,
+  PROVIDERS,
+  scriptModelTurns,
+  seedSession,
+  seedSessions,
+  setModelReply,
+  stubFetch,
+  textTurn,
+  toolCallTurn,
+  utimes,
+  validateApiKey,
+  writeFile,
+};
+export const test = base.extend<{ runtime: typeof runtime }>({
+  runtime: async ({}, provide) => {
+    await provide(runtime);
+  },
+});

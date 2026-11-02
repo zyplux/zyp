@@ -15,5 +15,6 @@
     "@totvibe/sandbox": "workspace:*",
     "jotai": "catalog:",
     "react": "catalog:"
-  }
+  },
+  "sideEffects": false
 }

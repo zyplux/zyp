@@ -3,12 +3,11 @@ import type { ClientCommand } from '@totvibe/protocol';
 import { ServerEventSchema } from '@totvibe/protocol';
 import { type AgentController, applyServerEvent, type Store } from '@totvibe/view';
 
-type WebController = {
-  controller: AgentController;
-  start(): void;
-};
-
 export const createSocketController = (store: Store) => {
+  type WebController = {
+    controller: AgentController;
+    start(): void;
+  };
   const socketUrl = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`;
   let socket: undefined | WebSocket;
   const send = (command: ClientCommand): void => {
