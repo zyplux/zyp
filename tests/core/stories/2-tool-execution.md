@@ -22,8 +22,6 @@ read-only calls run concurrently, and composed middleware wraps in order.
 
 ### 2.3.1 exposes every definition in the model tool set by name
 
-### 2.3.2 finds definitions by name and classifies read-only tools
-
 ## 2.4 composing middleware
 
 ### 2.4.1 applies middleware in declaration order around the tool

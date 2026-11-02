@@ -1,4 +1,4 @@
-import { JsonlLog } from '@totvibe/core';
+import { JsonlLog } from '@totvibe/core/index';
 
 import type { PolicyDecisionRecord } from './index';
 

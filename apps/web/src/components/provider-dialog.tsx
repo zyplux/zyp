@@ -1,48 +1,23 @@
-import { DEFAULT_PROVIDER, type ProviderInfo, PROVIDERS } from '@totvibe/protocol';
-import {
-  connectedProvidersAtom,
-  connectionStatusAtom,
-  modelIdAtom,
-  noticeAtom,
-  providerDialogOpenAtom,
-  providerNameAtom,
-  theme,
-  useController,
-} from '@totvibe/view';
-import { useAtomValue, useSetAtom } from 'jotai';
+import { PROVIDERS } from '@totvibe/protocol';
+import { theme, useProviderDialog } from '@totvibe/view';
 import { useState } from 'react';
 
 export const ProviderDialog = () => {
-  const controller = useController();
-  const activeProviderName = useAtomValue(providerNameAtom);
-  const activeModelId = useAtomValue(modelIdAtom);
-  const connectionStatus = useAtomValue(connectionStatusAtom);
-  const connectedProviders = useAtomValue(connectedProvidersAtom);
-  const notice = useAtomValue(noticeAtom);
-  const setNotice = useSetAtom(noticeAtom);
-  const setProviderDialogOpen = useSetAtom(providerDialogOpenAtom);
-  const canClose = connectionStatus !== 'no-key';
-
-  const initialIndex = Math.max(
-    0,
-    PROVIDERS.findIndex(provider => provider.name === activeProviderName),
-  );
-  const [highlightedIndex, setHighlightedIndex] = useState(initialIndex);
+  const {
+    activateProvider,
+    canClose,
+    controller,
+    highlightedIndex,
+    highlightedProvider,
+    isConnected,
+    notice,
+    resolveModelId,
+    setHighlightedIndex,
+    setNotice,
+    setProviderDialogOpen,
+  } = useProviderDialog();
   const [keyValue, setKeyValue] = useState('');
   const [modelValue, setModelValue] = useState('');
-
-  const highlightedProvider = PROVIDERS[highlightedIndex] ?? DEFAULT_PROVIDER;
-  const isConnected = ({ name }: ProviderInfo) => connectedProviders.has(name);
-  const resolveModelId = ({ defaultModel, name }: ProviderInfo) =>
-    name === activeProviderName ? activeModelId : defaultModel;
-
-  const activateProvider = (provider: ProviderInfo) => {
-    if (!isConnected(provider)) {
-      setNotice(`Add a ${provider.apiKeyEnv} to use ${provider.label}.`);
-      return;
-    }
-    controller.selectProvider(provider.name, modelValue.trim() || resolveModelId(provider));
-  };
 
   const saveApiKey = () => {
     const apiKey = keyValue.trim();
@@ -102,14 +77,14 @@ export const ProviderDialog = () => {
             setModelValue(event.target.value);
           }}
           onKeyDown={event => {
-            if (event.key === 'Enter') activateProvider(highlightedProvider);
+            if (event.key === 'Enter') activateProvider(modelValue.trim() || resolveModelId(highlightedProvider));
           }}
           placeholder={resolveModelId(highlightedProvider)}
           value={modelValue}
         />
         <button
           onClick={() => {
-            activateProvider(highlightedProvider);
+            activateProvider(modelValue.trim() || resolveModelId(highlightedProvider));
           }}
           type="button"
         >

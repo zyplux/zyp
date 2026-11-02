@@ -1,4 +1,4 @@
-import type { ZodType } from 'zod';
+import type * as z from 'zod';
 
 import type { Middleware, ToolInvocation } from './pipeline';
 
@@ -27,7 +27,7 @@ export type ToolContext = {
 export type ToolDef<Input = unknown> = {
   description: string;
   execute(input: Input, context: ToolContext): Promise<string>;
-  inputSchema: ZodType<Input>;
+  inputSchema: z.ZodType<Input>;
   name: string;
   risk: ToolRisk;
 };
@@ -47,7 +47,7 @@ export const buildModelToolSet = (definitions: AnyToolDef[]) => {
 
 export const defineTool = <Input>(definition: ToolDef<Input>): ToolDef<Input> => definition;
 
-export const executeToolCall = async (
+const executeToolCall = async (
   definitions: AnyToolDef[],
   { input, toolCallId, toolName }: ToolCallRequest,
   context: ToolContext,
@@ -86,10 +86,10 @@ export const executeToolCall = async (
   }
 };
 
-export const findToolDefinition = (definitions: AnyToolDef[], name: string) =>
+const findToolDefinition = (definitions: AnyToolDef[], name: string) =>
   definitions.find(definition => definition.name === name);
 
-export const isReadOnly = ({ risk }: AnyToolDef) => risk === 'read';
+const isReadOnly = ({ risk }: AnyToolDef) => risk === 'read';
 
 export const runToolCalls = async (
   definitions: AnyToolDef[],

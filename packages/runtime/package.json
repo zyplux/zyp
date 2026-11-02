@@ -16,5 +16,6 @@
     "@totvibe/sandbox": "workspace:*",
     "@totvibe/tools": "workspace:*",
     "ai": "catalog:"
-  }
+  },
+  "sideEffects": false
 }

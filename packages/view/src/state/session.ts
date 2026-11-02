@@ -1,5 +1,5 @@
-import type { ApprovalRequest } from '@totvibe/safety';
-import type { SandboxStatus } from '@totvibe/sandbox';
+import type { ApprovalRequest } from '@totvibe/safety/interfaces';
+import type { SandboxStatus } from '@totvibe/sandbox/interfaces';
 
 import { atom } from 'jotai';
 

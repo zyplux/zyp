@@ -14,5 +14,6 @@
     "@totvibe/sandbox": "workspace:*",
     "ai": "catalog:",
     "zod": "catalog:"
-  }
+  },
+  "sideEffects": false
 }

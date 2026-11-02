@@ -1,17 +1,11 @@
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { createRuntime } from '@totvibe/runtime';
 import { type AgentController, applyServerEvent, type Store } from '@totvibe/view';
-import { Root } from '@totvibe/web';
+import { Root } from '@totvibe/web/root';
 import { act } from 'react';
 
-import type { Scene } from '#shared-stories/harness';
-
-import { buildConfig, CONNECTED_PROVIDER_KEYS, isolateProviderEnv, stubFetchOk } from '#fixtures/config';
-import { resetModelReply, setModelReply } from '#model-mock';
-
-type RenderOptions = {
-  connectedProviderKeys?: Record<string, string>;
-};
+import { buildConfig } from '#fixtures/config';
+import { createHarness, isolateScene, type RenderOptions, type Scene } from '#shared-stories/harness';
 
 const EVENTUALLY_MAX_PASSES = 50;
 
@@ -64,8 +58,7 @@ const inputBar = () => {
 };
 
 const renderScene = async ({ connectedProviderKeys }: RenderOptions) => {
-  const restoreEnv = isolateProviderEnv(connectedProviderKeys ?? {});
-  const restoreFetch = stubFetchOk();
+  const restoreScene = isolateScene(connectedProviderKeys);
 
   await act(async () => {
     render(<Root create={createInProcessController} />);
@@ -114,24 +107,10 @@ const renderScene = async ({ connectedProviderKeys }: RenderOptions) => {
     },
     dispose: () => {
       cleanup();
-      restoreFetch();
-      restoreEnv();
+      restoreScene();
       return Promise.resolve();
     },
   } satisfies Scene;
 };
 
-export const webHarness = {
-  connected: () => {
-    resetModelReply();
-    return renderScene({ connectedProviderKeys: CONNECTED_PROVIDER_KEYS });
-  },
-  connectedWithReply: (reply: string) => {
-    setModelReply(reply);
-    return renderScene({ connectedProviderKeys: CONNECTED_PROVIDER_KEYS });
-  },
-  unconnected: () => {
-    resetModelReply();
-    return renderScene({});
-  },
-};
+export const webHarness = createHarness(renderScene);

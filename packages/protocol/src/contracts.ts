@@ -1,9 +1,9 @@
-import type { AgentEvent } from '@totvibe/core';
-import type { ApprovalRequest } from '@totvibe/safety';
-import type { SandboxStatus } from '@totvibe/sandbox';
+import type { AgentEvent } from '@totvibe/core/interfaces';
+import type { ApprovalRequest } from '@totvibe/safety/interfaces';
+import type { SandboxStatus } from '@totvibe/sandbox/interfaces';
 
 import { modelMessageSchema } from 'ai';
-import { z } from 'zod';
+import * as z from 'zod';
 
 const ToolRiskSchema = z.enum(['mutate', 'read']);
 
@@ -35,14 +35,6 @@ const SandboxStatusSchema = z.object({
   net: z.enum(['inherit', 'none']),
 }) satisfies z.ZodType<SandboxStatus>;
 
-export type ClientCommand =
-  | { apiKey: string; providerName: string; type: 'save-api-key' }
-  | { granted: boolean; type: 'approve' }
-  | { modelId: string; providerName: string; type: 'select-provider' }
-  | { providerName: string; type: 'test-connection' }
-  | { text: string; type: 'submit' }
-  | { type: 'cancel' };
-
 export const ClientCommandSchema = z.discriminatedUnion('type', [
   z.object({ apiKey: z.string(), providerName: z.string(), type: z.literal('save-api-key') }),
   z.object({ granted: z.boolean(), type: z.literal('approve') }),
@@ -50,32 +42,7 @@ export const ClientCommandSchema = z.discriminatedUnion('type', [
   z.object({ providerName: z.string(), type: z.literal('test-connection') }),
   z.object({ text: z.string(), type: z.literal('submit') }),
   z.object({ type: z.literal('cancel') }),
-]) satisfies z.ZodType<ClientCommand>;
-
-export type ConnectionStatus = 'checking' | 'no-key' | 'ok' | 'rejected' | 'unreachable';
-
-export type Role = 'assistant' | 'tool' | 'user';
-
-export type ServerEvent =
-  | { event: AgentEvent; type: 'agent' }
-  | { modelId: string; providerName: string; type: 'provider-changed' }
-  | { names: string[]; type: 'connected-providers' }
-  | { open: boolean; type: 'provider-dialog' }
-  | { request?: ApprovalRequest; type: 'approval-request' }
-  | { role: Role; text: string; type: 'message' }
-  | { session: SessionInfo; type: 'init' }
-  | { status: ConnectionStatus; type: 'connection-status' }
-  | { status: SandboxStatus; type: 'sandbox-status' }
-  | { status: string; type: 'agent-status' }
-  | { streaming: boolean; type: 'streaming' }
-  | { text: string; type: 'notice' };
-
-export type SessionInfo = {
-  cwd: string;
-  isProviderDialogOpen: boolean;
-  modelId: string;
-  providerName: string;
-};
+]);
 
 const ConnectionStatusSchema = z.enum(['checking', 'no-key', 'ok', 'rejected', 'unreachable']);
 
@@ -88,7 +55,7 @@ const SessionInfoSchema = z.object({
   isProviderDialogOpen: z.boolean(),
   modelId: z.string(),
   providerName: z.string(),
-}) satisfies z.ZodType<SessionInfo>;
+});
 
 export const ServerEventSchema = z.discriminatedUnion('type', [
   z.object({ event: AgentEventSchema, type: z.literal('agent') }),
@@ -103,4 +70,9 @@ export const ServerEventSchema = z.discriminatedUnion('type', [
   z.object({ status: z.string(), type: z.literal('agent-status') }),
   z.object({ streaming: z.boolean(), type: z.literal('streaming') }),
   z.object({ text: z.string(), type: z.literal('notice') }),
-]) satisfies z.ZodType<ServerEvent>;
+]);
+
+export type ClientCommand = z.infer<typeof ClientCommandSchema>;
+export type ConnectionStatus = z.infer<typeof ConnectionStatusSchema>;
+export type Role = z.infer<typeof RoleSchema>;
+export type ServerEvent = z.infer<typeof ServerEventSchema>;

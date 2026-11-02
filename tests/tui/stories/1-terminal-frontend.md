@@ -1,7 +1,6 @@
 # 1. [Terminal frontend](1-terminal-frontend.test.ts)
 
-The OpenTUI terminal frontend renders the shared session behavior — provider
-connection, slash commands, and model round-trips — on a character frame.
+The OpenTUI terminal frontend renders the shared session behavior — provider connection, slash commands, and model round-trips — on a character frame.
 
 ## 1.1 connecting a provider
 
@@ -11,11 +10,17 @@ connection, slash commands, and model round-trips — on a character frame.
 
 ### 1.1.3 shows the input prompt when a provider is connected
 
+### 1.1.4 arrowing up moves the highlight to the previous provider
+
+### 1.1.5 keeps the dialog open until a provider is connected
+
 ## 1.2 driving the session with slash commands
 
 ### 1.2.1 the /grant command prints a confirmation in the conversation
 
 ### 1.2.2 the /provider command opens the provider dialog
+
+### 1.2.3 tests a connected provider and closes the dialog with Escape
 
 ## 1.3 talking to the model
 

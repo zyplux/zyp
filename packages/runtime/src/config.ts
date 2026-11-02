@@ -1,6 +1,6 @@
 import type { ModelMessage } from 'ai';
 
-import { findLatestSessionId, loadSessionMessages } from '@totvibe/core';
+import { findLatestSessionId, loadSessionMessages } from '@totvibe/core/index';
 import { DEFAULT_PROVIDER, findProvider, type ProviderInfo, PROVIDERS } from '@totvibe/protocol';
 import { homedir } from 'node:os';
 import path from 'node:path';

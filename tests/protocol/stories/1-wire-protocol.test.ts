@@ -1,14 +1,6 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect } from 'vitest';
 
-import {
-  type ClientCommand,
-  ClientCommandSchema,
-  DEFAULT_PROVIDER,
-  findProvider,
-  PROVIDERS,
-  type ServerEvent,
-  ServerEventSchema,
-} from '#protocol';
+import { type ClientCommand, type ServerEvent, test } from '#protocol';
 
 const roundTrip = <T>(value: T): T => structuredClone(value);
 
@@ -49,14 +41,14 @@ describe('1.1 client commands on the wire', () => {
     }
   });
 
-  test('1.1.2 the client command schema accepts every command shape', () => {
+  test('1.1.2 the client command schema accepts every command shape', ({ protocol: fixture }) => {
     for (const command of CLIENT_COMMANDS) {
-      expect(ClientCommandSchema.parse(roundTrip(command))).toEqual(command);
+      expect(fixture.ClientCommandSchema.parse(roundTrip(command))).toEqual(command);
     }
   });
 
-  test('1.1.3 the client command schema rejects an unknown command type', () => {
-    expect(() => ClientCommandSchema.parse({ type: 'self-destruct' })).toThrow();
+  test('1.1.3 the client command schema rejects an unknown command type', ({ protocol: fixture }) => {
+    expect(() => fixture.ClientCommandSchema.parse({ type: 'self-destruct' })).toThrow();
   });
 });
 
@@ -67,31 +59,31 @@ describe('1.2 server events on the wire', () => {
     }
   });
 
-  test('1.2.2 the server event schema accepts every event shape', () => {
+  test('1.2.2 the server event schema accepts every event shape', ({ protocol: fixture }) => {
     for (const event of SERVER_EVENTS) {
-      expect(ServerEventSchema.parse(roundTrip(event))).toEqual(event);
+      expect(fixture.ServerEventSchema.parse(roundTrip(event))).toEqual(event);
     }
   });
 
-  test('1.2.3 the server event schema rejects a malformed event', () => {
-    expect(() => ServerEventSchema.parse({ status: 42, type: 'agent-status' })).toThrow();
+  test('1.2.3 the server event schema rejects a malformed event', ({ protocol: fixture }) => {
+    expect(() => fixture.ServerEventSchema.parse({ status: 42, type: 'agent-status' })).toThrow();
   });
 });
 
 describe('1.3 provider registry', () => {
-  test('1.3.1 finds every registered provider by name', () => {
-    for (const provider of PROVIDERS) {
-      expect(findProvider(provider.name)).toBe(provider);
+  test('1.3.1 finds every registered provider by name', ({ protocol: fixture }) => {
+    for (const provider of fixture.PROVIDERS) {
+      expect(fixture.findProvider(provider.name)).toBe(provider);
     }
   });
 
-  test('1.3.2 returns undefined for an unknown provider name', () => {
-    expect(findProvider('nonexistent')).toBeUndefined();
+  test('1.3.2 returns undefined for an unknown provider name', ({ protocol: fixture }) => {
+    expect(fixture.findProvider('nonexistent')).toBeUndefined();
   });
 
-  test('1.3.3 lists the default provider first with unique names and key env vars', () => {
-    expect(PROVIDERS[0]).toBe(DEFAULT_PROVIDER);
-    expect(new Set(PROVIDERS.map(provider => provider.name)).size).toBe(PROVIDERS.length);
-    expect(new Set(PROVIDERS.map(provider => provider.apiKeyEnv)).size).toBe(PROVIDERS.length);
+  test('1.3.3 lists the default provider first with unique names and key env vars', ({ protocol: fixture }) => {
+    expect(fixture.PROVIDERS[0]).toBe(fixture.DEFAULT_PROVIDER);
+    expect(new Set(fixture.PROVIDERS.map(provider => provider.name)).size).toBe(fixture.PROVIDERS.length);
+    expect(new Set(fixture.PROVIDERS.map(provider => provider.apiKeyEnv)).size).toBe(fixture.PROVIDERS.length);
   });
 });

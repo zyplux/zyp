@@ -1,5 +1,5 @@
 {
-  "extends": "@totvibe/tsconfig/web.json",
+  "extends": "@totvibe/tsconfig/tsconfig.web.json",
   "include": ["src"],
   "references": [
     { "path": "../../packages/protocol" },

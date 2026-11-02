@@ -1,5 +1,5 @@
 {
-  "extends": "@totvibe/tsconfig/bun.json",
+  "extends": "@totvibe/tsconfig/tsconfig.bun.json",
   "include": ["src"],
   "references": [
     { "path": "../core" },

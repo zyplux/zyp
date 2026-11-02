@@ -7,7 +7,7 @@
     "totvibe": "./src/index.tsx"
   },
   "exports": {
-    ".": "./src/root.tsx"
+    "./root": "./src/root.tsx"
   },
   "dependencies": {
     "@opentui/core": "catalog:",

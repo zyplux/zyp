@@ -1,4 +1,4 @@
-import type { AgentEvent } from './events';
+import type { AgentEvent } from './interfaces';
 import type { Session } from './session';
 
 import { type LanguageModel, type ModelMessage, streamText, type ToolResultPart, type ToolSet } from './ai-core';
@@ -27,14 +27,6 @@ export type AgentDeps = {
 
 const DEFAULT_MAX_STEPS = 24;
 
-type TurnResult = {
-  aborted: boolean;
-  calls: ToolCallRequest[];
-  finishReason: string;
-  messages: ModelMessage[];
-  tokens: number;
-};
-
 export async function* runAgent({ messages }: Session, userText: string, deps: AgentDeps) {
   const maxSteps = deps.maxSteps ?? DEFAULT_MAX_STEPS;
   const middleware = deps.middleware ?? passthrough;
@@ -50,33 +42,25 @@ export async function* runAgent({ messages }: Session, userText: string, deps: A
   let usedTokens = 0;
 
   for (let step = 0; step < maxSteps; step += 1) {
-    if (deps.signal?.aborted) {
-      yield { type: 'aborted' } satisfies AgentEvent;
-      return;
-    }
-    if (deadline !== undefined && Date.now() > deadline) {
-      yield { finishReason: 'wall_clock', type: 'turn_end' } satisfies AgentEvent;
-      return;
-    }
-    if (deps.tokenBudget !== undefined && usedTokens >= deps.tokenBudget) {
-      yield { finishReason: 'token_budget', type: 'turn_end' } satisfies AgentEvent;
+    type TurnResult = {
+      aborted: boolean;
+      calls: ToolCallRequest[];
+      finishReason: string;
+      messages: ModelMessage[];
+      tokens: number;
+    };
+    const ending = findTurnEnd(deps, deadline, usedTokens);
+    if (ending) {
+      yield ending;
       return;
     }
 
     let turn: TurnResult;
     try {
-      turn = yield* streamModelTurn(deps.model, deps, messages, modelTools);
+      turn = yield* streamWithFallback(deps, messages, modelTools);
     } catch (error) {
-      if (!deps.fallbackModel) {
-        yield { error: describeError(error), type: 'error' } satisfies AgentEvent;
-        return;
-      }
-      try {
-        turn = yield* streamModelTurn(deps.fallbackModel, deps, messages, modelTools);
-      } catch (fallbackError) {
-        yield { error: describeError(fallbackError), type: 'error' } satisfies AgentEvent;
-        return;
-      }
+      yield { error: describeError(error), type: 'error' } satisfies AgentEvent;
+      return;
     }
 
     if (turn.aborted) {
@@ -84,10 +68,7 @@ export async function* runAgent({ messages }: Session, userText: string, deps: A
       return;
     }
 
-    for (const message of turn.messages) {
-      messages.push(message);
-      yield { message, type: 'message' } satisfies AgentEvent;
-    }
+    yield* appendMessages(messages, turn.messages);
     usedTokens += turn.tokens;
 
     if (turn.calls.length === 0) {
@@ -98,28 +79,41 @@ export async function* runAgent({ messages }: Session, userText: string, deps: A
     const outcomes = await runToolCalls(deps.tools, turn.calls, toolContext, middleware);
     const toolMessage = buildToolMessage(outcomes);
     messages.push(toolMessage);
-    for (const outcome of outcomes) {
-      yield (
-        outcome.isError
-          ? {
-              error: outcome.text,
-              id: outcome.toolCallId,
-              name: outcome.toolName,
-              type: 'tool_error',
-            }
-          : {
-              id: outcome.toolCallId,
-              name: outcome.toolName,
-              output: outcome.text,
-              type: 'tool_result',
-            }
-      ) satisfies AgentEvent;
-    }
+    for (const outcome of outcomes) yield makeToolEvent(outcome);
     yield { message: toolMessage, type: 'message' } satisfies AgentEvent;
   }
 
   yield { finishReason: 'max_steps', type: 'turn_end' } satisfies AgentEvent;
 }
+
+function* appendMessages(messages: ModelMessage[], incoming: ModelMessage[]) {
+  for (const message of incoming) {
+    messages.push(message);
+    yield { message, type: 'message' } satisfies AgentEvent;
+  }
+}
+
+const findTurnEnd = ({ signal, tokenBudget }: AgentDeps, deadline: number | undefined, usedTokens: number) => {
+  if (signal?.aborted) return { type: 'aborted' } satisfies AgentEvent;
+  if (deadline !== undefined && Date.now() > deadline)
+    return { finishReason: 'wall_clock', type: 'turn_end' } satisfies AgentEvent;
+  if (tokenBudget !== undefined && usedTokens >= tokenBudget)
+    return { finishReason: 'token_budget', type: 'turn_end' } satisfies AgentEvent;
+};
+
+async function* streamWithFallback(deps: AgentDeps, messages: ModelMessage[], modelTools: ToolSet) {
+  try {
+    return yield* streamModelTurn(deps.model, deps, messages, modelTools);
+  } catch (error) {
+    if (!deps.fallbackModel) throw error;
+    return yield* streamModelTurn(deps.fallbackModel, deps, messages, modelTools);
+  }
+}
+
+const makeToolEvent = ({ isError, text, toolCallId, toolName }: ToolCallOutcome) =>
+  isError
+    ? ({ error: text, id: toolCallId, name: toolName, type: 'tool_error' } satisfies AgentEvent)
+    : ({ id: toolCallId, name: toolName, output: text, type: 'tool_result' } satisfies AgentEvent);
 
 const buildToolMessage = (outcomes: ToolCallOutcome[]) => {
   const content: ToolResultPart[] = outcomes.map(outcome => ({
@@ -142,10 +136,10 @@ async function* streamModelTurn(
 ) {
   const stream = streamText({
     abortSignal: signal,
+    instructions: system,
     messages,
     model,
     onError: () => void 0,
-    system: system,
     tools: modelTools,
   });
 

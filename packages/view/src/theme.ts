@@ -11,3 +11,6 @@ export const theme = {
   user: '#7aa2f7',
   warn: '#e0af68',
 } as const;
+
+export const ROLE_COLOR = { assistant: theme.assistant, tool: theme.tool, user: theme.user };
+export const ROLE_LABEL = { assistant: 'totvibe', tool: 'tool', user: 'you' };

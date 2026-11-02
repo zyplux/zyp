@@ -1,10 +1,23 @@
 {
-  "extends": "@totvibe/tsconfig/tui.json",
-  "compilerOptions": { "paths": { "@/*": ["./src/*"] } },
+  "extends": "@totvibe/tsconfig/tsconfig.tui.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
   "include": ["src"],
   "references": [
-    { "path": "../../packages/protocol" },
-    { "path": "../../packages/runtime" },
-    { "path": "../../packages/view" }
+    {
+      "path": "../../packages/protocol"
+    },
+    {
+      "path": "../../packages/runtime"
+    },
+    {
+      "path": "../../packages/view"
+    },
+    {
+      "path": "../../apps/web"
+    }
   ]
 }

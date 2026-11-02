@@ -1,16 +1,4 @@
-import { type DisplayMessage, type Role, theme } from '@totvibe/view';
-
-const ROLE_COLOR: Record<Role, string> = {
-  assistant: theme.assistant,
-  tool: theme.tool,
-  user: theme.user,
-};
-
-const ROLE_LABEL: Record<Role, string> = {
-  assistant: 'totvibe',
-  tool: 'tool',
-  user: 'you',
-};
+import { type DisplayMessage, ROLE_COLOR, ROLE_LABEL } from '@totvibe/view';
 
 type MessageViewProps = {
   message: DisplayMessage;

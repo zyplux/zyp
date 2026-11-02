@@ -1,9 +1,9 @@
 import type { LanguageModel } from 'ai';
 
-import { compose, createSession, EventBus, runAgent, type Session, SessionStore } from '@totvibe/core';
+import { compose, createSession, EventBus, runAgent, type Session, SessionStore } from '@totvibe/core/index';
 import { DEFAULT_PROVIDER, findProvider, PROVIDERS, type ServerEvent } from '@totvibe/protocol';
-import { type ApprovalRequest, AuditLedger, policyGate } from '@totvibe/safety';
-import { probeSandbox, SandboxState } from '@totvibe/sandbox';
+import { type ApprovalRequest, AuditLedger, policyGate } from '@totvibe/safety/index';
+import { probeSandbox, SandboxState } from '@totvibe/sandbox/index';
 import { createBuiltinTools } from '@totvibe/tools';
 
 import type { InitialConfig } from './config';
@@ -64,7 +64,7 @@ export const createRuntime = (
   let activeProviderName = configuredProviderName;
   let activeModelId = configuredModelId;
 
-  const approve = (request: ApprovalRequest) =>
+  const isApproved = (request: ApprovalRequest) =>
     new Promise<boolean>(resolve => {
       approvalResolver = resolve;
       emit({ request, type: 'approval-request' });
@@ -74,7 +74,7 @@ export const createRuntime = (
   const middleware = compose(
     policyGate({
       approvalTimeoutMs: limits.approvalTimeoutMs,
-      approve,
+      approve: isApproved,
       mode: autoApprove ? 'auto' : 'default',
       onDecision: entry => {
         auditLedger.record(entry);

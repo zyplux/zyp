@@ -12,5 +12,6 @@
     "@totvibe/core": "workspace:*",
     "@totvibe/sandbox": "workspace:*",
     "zod": "catalog:"
-  }
+  },
+  "sideEffects": false
 }

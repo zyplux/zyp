@@ -1,12 +1,6 @@
-import type { ToolRisk } from '@totvibe/core';
+import type { ToolRisk } from '@totvibe/core/index';
 
 export type PolicyMode = 'auto' | 'default';
-
-export type PolicyVerdict = {
-  absolute: boolean;
-  decision: 'allow' | 'ask' | 'deny';
-  reason: string;
-};
 
 export type ToolAction = {
   command?: string;
@@ -36,11 +30,10 @@ const PIPE_TO_SHELL = /\b(curl|wget)\b[^\n|]*\|\s*(sudo\s+)?(ba|z|da)?sh\b/;
 const WIPE_DEVICE = /\b(mkfs\b|dd\b[^\n]*\bof=\/dev\/|>\s*\/dev\/(sd|nvme|vd|disk))/;
 const SECRET_MARKERS = /(\.ssh\/|id_rsa|id_ed25519|\.aws\/credentials|\/etc\/shadow|\.pem\b)/;
 
-const isForcePush = (command: string) => {
-  if (!/\bgit\b[^\n]*\bpush\b/.test(command)) return false;
-  if (/--force-with-lease\b/.test(command)) return false;
-  return /--force\b/.test(command) || /\s-f(\s|$)/.test(command);
-};
+const isForcePush = (command: string) =>
+  /\bgit\b[^\n]*\bpush\b/.test(command) &&
+  !/--force-with-lease\b/.test(command) &&
+  (/--force\b/.test(command) || /\s-f(\s|$)/.test(command));
 
 const ABSOLUTE_DENY_RULES: AbsoluteDenyRule[] = [
   {
@@ -83,4 +76,4 @@ export const decidePolicy = (action: ToolAction, mode: PolicyMode) => {
   return { absolute: false, decision: 'ask', reason: 'a mutating action needs approval' };
 };
 
-export const matchAbsoluteDeny = (action: ToolAction) => ABSOLUTE_DENY_RULES.find(rule => rule.matches(action));
+const matchAbsoluteDeny = (action: ToolAction) => ABSOLUTE_DENY_RULES.find(rule => rule.matches(action));
